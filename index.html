@@ -398,6 +398,10 @@ dialog::backdrop{background:rgba(5,10,14,.7)}
 .badge .medal{width:34px;height:34px;border-radius:50%;border:2px solid var(--linje);display:grid;place-items:center;font-family:var(--display);font-weight:900;font-stretch:70%;margin-bottom:6px}
 .badge.on .medal{background:var(--signal);border-color:var(--signal);color:var(--natt)}
 @media (max-width:560px){.seg{display:flex;border-radius:12px}.seg button{flex:1 1 auto;border-radius:9px}.chnr{font-size:3.4rem}.chhead{gap:4px 14px}}
+.photo{margin:0 0 22px;max-width:760px}
+.photo img{display:block;width:100%;height:auto;border-radius:8px;border:1px solid var(--linje);background:var(--skiffer)}
+.photo figcaption{font-size:.85rem;margin-top:6px;line-height:1.45}
+.side .photo,.life .photo{margin:14px 0 0}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 </style>
 </head>
@@ -452,6 +456,7 @@ dialog::backdrop{background:rgba(5,10,14,.7)}
   <div class="chhead"><div class="chnr">1</div><div class="kick">Uppdrag 1 av 12</div><h2>Vägen till kriget</h2></div>
   <p class="ingress">Ett krig har sällan en enda orsak. Historiker skiljer mellan <b>långsiktiga</b> (bakomliggande) orsaker, som byggs upp under många år, och <b>kortsiktiga</b> orsaker: händelserna strax före som får kriget att bryta ut. Sortera korten.</p>
   <div class="trains">Tränar: orsaker och konsekvenser</div>
+  <div data-img="depression"></div>
   <div class="counter tnum" id="causeCounter"></div>
   <div class="cards" id="causeCards"></div>
   <div class="block panel ranker" id="causeRank">
@@ -498,8 +503,9 @@ dialog::backdrop{background:rgba(5,10,14,.7)}
     <div class="chartwrap" id="planeChart"></div>
     <p class="small muted" style="margin-top:6px">Avrundade siffror från The World War II Data Book, via Wikipedia. Olika källor ger något olika siffror, till exempel för USA.</p>
   </div>
+  <div class="block"><div data-img="industri"></div></div>
   <div class="block">
-    <h3>Åtta förklaringar</h3>
+    <h3>Nio förklaringar</h3>
     <p class="muted prose" style="margin-bottom:12px">Öppna korten. Vilka förklaringar är ekonomiska, vilka är militära och vilka handlar om beslut som människor fattade?</p>
     <div class="facts" id="factors"></div>
   </div>
@@ -1252,6 +1258,26 @@ C.plan = [
   "Dag 7: Läs igenom dina egna texter en gång. Vila och sov ordentligt."
 ];
 
+// Bilder från Wikimedia Commons (public domain). Laddas bara när sidan är online.
+C.images = {
+  depression: { f:"Unemployed_men_queued_outside_a_depression_soup_kitchen_opened_in_Chicago_by_Al_Capone,_02-1931_-_NARA_-_541927.jpg",
+    cap:"Arbetslösa köar till ett soppkök i Chicago, februari 1931. Krisen drabbade hela världen, och i Tyskland gav den nazisterna vind i seglen.", by:"Okänd fotograf, US National Archives (NAID 541927)" },
+  pearl: { f:"USS_SHAW_exploding_Pearl_Harbor_Nara_80-G-16871_2.jpg",
+    cap:"Jagaren USS Shaw exploderar under anfallet mot Pearl Harbor, 7 december 1941.", by:"Okänd fotograf i amerikanska flottan, US National Archives (80-G-16871)" },
+  normandie: { f:"Into_the_Jaws_of_Death_23-0455M_edit.jpg",
+    cap:"Amerikanska soldater vadar i land på Omaha Beach i Normandie, 6 juni 1944.", by:"Robert F. Sargent, amerikanska kustbevakningen" },
+  nagasaki: { f:"Nagasakibomb.jpg",
+    cap:"Atommolnet över Nagasaki, 9 augusti 1945, fotograferat från ett av de amerikanska planen.", by:"Charles Levy, US National Archives" },
+  industri: { f:"Woman_worker_in_the_Douglas_Aircraft_Company_plant1942.jpg",
+    cap:"En arbetare gör klart nosen på ett B-17-bombplan hos Douglas Aircraft i Kalifornien, oktober 1942.", by:"Alfred T. Palmer, Office of War Information" },
+  london: { f:"Sanctuary-_Air_Raid_Shelter_in_John_Keble_Church,_Mill_Hill,_London,_England,_1940_D1442.jpg",
+    cap:"Barn som blivit hemlösa under blitzen får mat i ett skyddsrum i en kyrka i London, 1940.", by:"Brittiska informationsministeriet, Imperial War Museum (D1442)" },
+  usa: { f:"R-1830_engine_on_C-47_at_factory_1942.jpg",
+    cap:"En kvinna lär sig montera en flygmotor hos Douglas Aircraft i Long Beach, oktober 1942.", by:"Alfred T. Palmer, Office of War Information" },
+  japansk: { f:"Mess_Hall_Line.jpg",
+    cap:"Kö till matsalen i interneringslägret Manzanar i Kalifornien, juli 1942.", by:"Dorothea Lange, War Relocation Authority" }
+};
+
 C.selfcheck = [
   "Jag har kontrollerat att mina fakta stämmer: årtal, namn och händelser.",
   "Jag förklarar hur saker hänger ihop, inte bara att de hände.",
@@ -1300,6 +1326,15 @@ function s(tag, attrs, text) {
   return el;
 }
 function rc(el, ...kids) { el.replaceChildren(...kids.flat(Infinity).filter(k => k != null && k !== false && k !== "")); }
+function fig(key) {
+  const im = C.images && C.images[key]; if (!im) return null;
+  const page = "https://commons.wikimedia.org/wiki/File:" + im.f;
+  const f = h("figure", { class: "photo" },
+    h("img", { src: "https://commons.wikimedia.org/wiki/Special:FilePath/" + im.f + "?width=1100", alt: im.cap, loading: "lazy" }),
+    h("figcaption", null, im.cap, " ", h("span", { class: "muted" }, "Foto: " + im.by + ". Public domain, via "), h("a", { href: page }, "Wikimedia Commons"), "."));
+  f.querySelector("img").addEventListener("error", () => f.remove());
+  return f;
+}
 const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
 const nf = n => n.toLocaleString("sv-SE");
 
@@ -1660,7 +1695,7 @@ function initMap() {
       h("div", { class: "when" }, sn.date), h("h3", null, sn.title),
       h("ul", null, sn.events.map(e => h("li", null, e))),
       h("div", { class: "think" }, h("b", null, "Fundera på: "), sn.question),
-      h("div", { class: "place" }, m ? [h("div", { class: "when small" }, m.date), h("div", { class: "pt" }, m.title), h("p", { style: "margin-top:6px;font-size:.95rem" }, m.text), h("p", { class: "why" }, h("b", null, "Varför viktigt? "), m.why)]
+      h("div", { class: "place" }, m ? [h("div", { class: "when small" }, m.date), h("div", { class: "pt" }, m.title), h("p", { style: "margin-top:6px;font-size:.95rem" }, m.text), h("p", { class: "why" }, h("b", null, "Varför viktigt? "), m.why), fig(m.id)]
         : h("p", { class: "muted small" }, "Klicka på en prick på kartan för att läsa om platsen. " + T.markers.filter(x => x.s <= si).length + " platser syns just nu.")));
   }
   function legend() {
@@ -1764,7 +1799,7 @@ function initLives() {
     rc(panel, h("div", { class: "when" }, l.when), h("h3", null, l.who),
       h("ul", null, l.facts.map(f => h("li", null, f))),
       h("div", { class: "fac" }, h("span", { class: "small muted" }, "Det som avgjorde villkoren:"), l.factors.map(f => h("span", { class: "chip" }, f))),
-      h("div", { class: "think" }, h("b", null, "Fundera på: "), l.think));
+      h("div", { class: "think" }, h("b", null, "Fundera på: "), l.think), fig(l.id));
     if (user) check();
   }
   rc(tabs, ...C.lives.map(l => h("button", { role: "tab", "data-id": l.id, onclick: () => show(l.id, true) }, l.who)));
@@ -2206,6 +2241,7 @@ function initPlan() {
 // ---------- Start ----------
 function boot() {
   renderHud(); renderMissions();
+  $$("[data-img]").forEach(el => { const f = fig(el.dataset.img); if (f) el.replaceWith(f); else el.remove(); });
   $("#xpBtn").addEventListener("click", openBadges);
   $("#dlgClose").addEventListener("click", () => $("#badgeDlg").close());
   $("#badgeDlg").addEventListener("click", e => { if (e.target.id === "badgeDlg") e.target.close(); });
