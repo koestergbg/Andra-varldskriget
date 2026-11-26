@@ -686,7 +686,7 @@ dialog::backdrop{background:rgba(5,10,14,.7)}
 <footer><div class="wrap prose">
   <p>Gjord för Emilia. Siffror om krigets döda och offer är ungefärliga, och olika källor ger olika svar. Kontrollera alltid mot din lärobok och det din lärare har gått igenom.</p>
   <p>Kartdata: Natural Earth. Betygskriterierna: Skolverket, kursplanen i historia för grundskolan.</p>
-  <p><button class="btn" id="resetBtn">Nollställ mina poäng och svar</button></p>
+  <p><button class="btn" id="resetBtn">Nollställ mina poäng och svar</button> <span class="small">Vill du bara göra om en del finns knappen Gör om uppdraget i varje uppdrag.</span></p>
 </div></footer>
 
 <div class="toasts" id="toasts" aria-live="polite"></div>
@@ -2159,6 +2159,34 @@ function initOpen() {
   }));
 }
 
+
+// ---------- Gör om ett uppdrag ----------
+const RESETS = { orsaker:["sort","rankC"], kartan:["snaps","markers"], segern:["factors","rankV"], manniskor:["lives","lifeSel"],
+  forintelsen:["holoText"], sverige:["scale","scaleWrong"], kallor:["src"], konsekvenser:["cons"], historiebruk:["hbSel","hbOwn"],
+  "a-svar":["text","self","aQ","modelTab"], begrepp:["terms"], slutprov:["quiz","open"], plan:["plan"] };
+function initRedo() {
+  for (const [id, keys] of Object.entries(RESETS)) {
+    const sec = document.getElementById(id); if (!sec) continue;
+    let armed = false, tm;
+    const b = h("button", { class: "btn", style: "padding:5px 14px;font-size:.85rem" }, "Gör om uppdraget");
+    b.addEventListener("click", () => {
+      if (!armed) { armed = true; b.textContent = "Klicka igen för att rensa dina svar här"; tm = setTimeout(() => { armed = false; b.textContent = "Gör om uppdraget"; }, 4000); return; }
+      clearTimeout(tm);
+      const fresh = blank();
+      for (const k of keys) {
+        if (k === "quiz") S.quiz = { i: 0, ans: [], best: S.quiz.best || 0, runs: S.quiz.runs || 0 };
+        else if (k in fresh) S[k] = fresh[k]; else delete S[k];
+      }
+      save();
+      location.hash = id;
+      location.reload();
+    });
+    const tr = sec.querySelector(".trains");
+    const row = h("div", { class: "rowflex", style: "margin:-12px 0 26px" }, b, h("span", { class: "small muted" }, "Rensar bara svaren i det här uppdraget. XP och märken finns kvar."));
+    if (tr) tr.after(row); else sec.querySelector(".wrap").append(row);
+  }
+}
+
 // ---------- Plan och återställning ----------
 function initPlan() {
   const ul = $("#planList");
@@ -2181,7 +2209,7 @@ function boot() {
   $("#xpBtn").addEventListener("click", openBadges);
   $("#dlgClose").addEventListener("click", () => $("#badgeDlg").close());
   $("#badgeDlg").addEventListener("click", e => { if (e.target.id === "badgeDlg") e.target.close(); });
-  const parts = [initStrip, initCauses, initMap, initVictory, initLives, initHolocaust, initScale, initSources, initCons, initHB, initModels, initTerms, initQuiz, initOpen, initPlan];
+  const parts = [initStrip, initCauses, initMap, initVictory, initLives, initHolocaust, initScale, initSources, initCons, initHB, initModels, initTerms, initQuiz, initOpen, initPlan, initRedo];
   for (const f of parts) { try { f(); } catch (e) { console.error(f.name, e); } }
 }
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
